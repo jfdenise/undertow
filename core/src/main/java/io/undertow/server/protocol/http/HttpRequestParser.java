@@ -170,7 +170,8 @@ public abstract class HttpRequestParser {
     private final int maxCachedHeaderSize;
     private final boolean allowUnescapedCharactersInUrl;
     private final boolean allowIDLessMatrixParams;
-
+    // XXX CREMA NOT NEEDED
+    private static final Constructor<?> GENERATED_PARSER_CONSTRUCTOR;
     private static final boolean[] ALLOWED_TARGET_CHARACTER = new boolean[256];
 
     private static final String ID_LESS_MATRIX_PARAMS_PROPERTY = "io.undertow.server.protocol.http.Parser.ID_LESS_MATRIX_PARAMS_PROPERTY";
@@ -203,6 +204,12 @@ public abstract class HttpRequestParser {
                 }
             }
         }
+        try {
+            Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
+            GENERATED_PARSER_CONSTRUCTOR = cls.getConstructor(OptionMap.class);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static boolean isTargetCharacterAllowed(char c) {
@@ -222,10 +229,7 @@ public abstract class HttpRequestParser {
 
     public static final HttpRequestParser instance(final OptionMap options) {
         try {
-            final Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
-
-            Constructor<?> ctor = cls.getConstructor(OptionMap.class);
-            return (HttpRequestParser) ctor.newInstance(options);
+            return (HttpRequestParser) GENERATED_PARSER_CONSTRUCTOR.newInstance(options);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

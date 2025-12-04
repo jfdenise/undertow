@@ -19,6 +19,7 @@
 package io.undertow.server.session;
 
 import java.security.SecureRandom;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * A {@link SessionIdGenerator} that uses a secure random to generate a
@@ -32,7 +33,7 @@ import java.security.SecureRandom;
  */
 public class SecureRandomSessionIdGenerator implements SessionIdGenerator {
 
-    private final SecureRandom random = new SecureRandom();
+    private SecureRandom random;
 
     private volatile int length = 30;
 
@@ -48,10 +49,16 @@ public class SecureRandomSessionIdGenerator implements SessionIdGenerator {
         SESSION_ID_ALPHABET = alphabet.toCharArray();
     }
 
+    public SecureRandomSessionIdGenerator() {
+        if (!WildFlyGraalSetup.isBuildTime()) {
+            random = new SecureRandom();
+        }
+    }
+
     @Override
     public String createSessionId() {
         final byte[] bytes = new byte[length];
-        random.nextBytes(bytes);
+        (random == null ? new SecureRandom() : random).nextBytes(bytes);
         return new String(encode(bytes));
     }
 
