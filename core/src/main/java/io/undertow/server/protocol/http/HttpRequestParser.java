@@ -222,9 +222,13 @@ public abstract class HttpRequestParser {
 
     public static final HttpRequestParser instance(final OptionMap options) {
         try {
-            final Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
-
-            Constructor<?> ctor = cls.getConstructor(OptionMap.class);
+            Constructor<?> ctor;
+            if(Boolean.getBoolean("org.wildfly.graal")) {
+                ctor = ServiceLoaderInitializer.getParserConstructor();
+            } else {
+                final Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
+                ctor = cls.getConstructor(OptionMap.class);
+            }
             return (HttpRequestParser) ctor.newInstance(options);
         } catch (Exception e) {
             throw new RuntimeException(e);
