@@ -18,6 +18,7 @@
 
 package io.undertow.websockets.jsr.annotated;
 
+import io.undertow.servlet.api.AnnotationRetriever;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.DecodeException;
 import jakarta.websocket.DeploymentException;
@@ -42,6 +43,7 @@ import java.util.Set;
 
 
 import io.undertow.servlet.api.InstanceHandle;
+import io.undertow.servlet.util.DefaultAnnotationRetriever;
 import io.undertow.websockets.jsr.Encoding;
 import io.undertow.websockets.jsr.EncodingFactory;
 import io.undertow.websockets.jsr.JsrWebSocketLogger;
@@ -76,6 +78,9 @@ public class AnnotatedEndpointFactory {
 
 
     public static AnnotatedEndpointFactory create(final Class<?> endpointClass, final EncodingFactory encodingFactory, final Set<String> paths) throws DeploymentException {
+        return create(DefaultAnnotationRetriever.INSTANCE, endpointClass, encodingFactory, paths);
+    }
+    public static AnnotatedEndpointFactory create(AnnotationRetriever retriever, final Class<?> endpointClass, final EncodingFactory encodingFactory, final Set<String> paths) throws DeploymentException {
         final Set<Class<? extends Annotation>> found = new HashSet<>();
         BoundMethod onOpen = null;
         BoundMethod onClose = null;
@@ -86,8 +91,8 @@ public class AnnotatedEndpointFactory {
         Class<?> c = endpointClass;
 
         do {
-            for (final Method method : c.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(OnOpen.class)) {
+            for (final Method method : retriever.getDeclaredMethods(c)) {
+                if (retriever.isAnnotationPresent(c, method, OnOpen.class)) {
                     if (found.contains(OnOpen.class)) {
                         if(!onOpen.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnOpen.class);
@@ -96,11 +101,11 @@ public class AnnotatedEndpointFactory {
                         }
                     }
                     found.add(OnOpen.class);
-                    onOpen = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
-                            new BoundSingleParameter(method, EndpointConfig.class, true),
-                            createBoundPathParameters(method, paths, endpointClass));
+                    onOpen = new BoundMethod(retriever, method, null, false, 0, new BoundSingleParameter(retriever, method, Session.class, true),
+                            new BoundSingleParameter(retriever, method, EndpointConfig.class, true),
+                            createBoundPathParameters(retriever, method, paths, endpointClass));
                 }
-                if (method.isAnnotationPresent(OnClose.class)) {
+                if (retriever.isAnnotationPresent(c, method, OnClose.class)) {
                     if (found.contains(OnClose.class)) {
                         if(!onClose.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnClose.class);
@@ -109,11 +114,11 @@ public class AnnotatedEndpointFactory {
                         }
                     }
                     found.add(OnClose.class);
-                    onClose = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
-                            new BoundSingleParameter(method, CloseReason.class, true),
-                            createBoundPathParameters(method, paths, endpointClass));
+                    onClose = new BoundMethod(retriever, method, null, false, 0, new BoundSingleParameter(retriever, method, Session.class, true),
+                            new BoundSingleParameter(retriever, method, CloseReason.class, true),
+                            createBoundPathParameters(retriever, method, paths, endpointClass));
                 }
-                if (method.isAnnotationPresent(OnError.class)) {
+                if (retriever.isAnnotationPresent(c, method, OnError.class)) {
                     if (found.contains(OnError.class)) {
                         if(!onError.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnError.class);
@@ -122,11 +127,11 @@ public class AnnotatedEndpointFactory {
                         }
                     }
                     found.add(OnError.class);
-                    onError = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
-                            new BoundSingleParameter(method, Throwable.class, false),
-                            createBoundPathParameters(method, paths, endpointClass));
+                    onError = new BoundMethod(retriever, method, null, false, 0, new BoundSingleParameter(retriever, method, Session.class, true),
+                            new BoundSingleParameter(retriever, method, Throwable.class, false),
+                            createBoundPathParameters(retriever, method, paths, endpointClass));
                 }
-                if (method.isAnnotationPresent(OnMessage.class) && ! method.isBridge()) {
+                if (retriever.isAnnotationPresent(c, method, OnMessage.class) && ! method.isBridge()) {
                     if(binaryMessage != null && binaryMessage.overrides(method)) {
                         continue;
                     }
@@ -136,13 +141,13 @@ public class AnnotatedEndpointFactory {
                     if(pongMessage != null && pongMessage.overrides(method)) {
                         continue;
                     }
-                    long maxMessageSize = method.getAnnotation(OnMessage.class).maxMessageSize();
+                    long maxMessageSize = ((OnMessage)retriever.getAnnotation(c, method, OnMessage.class)).maxMessageSize();
                     boolean messageHandled = false;
                     //this is a bit more complex
                     Class<?>[] parameterTypes = method.getParameterTypes();
                     int booleanLocation = -1;
                     for (int i = 0; i < parameterTypes.length; ++i) {
-                        if (hasAnnotation(PathParam.class, method.getParameterAnnotations()[i])) {
+                        if (hasAnnotation(PathParam.class, retriever.getParameterAnnotations(c, method)[i])) {
                             continue;
                         }
 
@@ -153,39 +158,39 @@ public class AnnotatedEndpointFactory {
                             if (textMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            textMessage = new BoundMethod(method, param, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
+                            textMessage = new BoundMethod(retriever, method, param, true, maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
                                     new BoundSingleParameter(i, param),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
                         } else if (encodingFactory.canDecodeBinary(param)) {
                             if (binaryMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            binaryMessage = new BoundMethod(method, param, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
+                            binaryMessage = new BoundMethod(retriever, method, param, true, maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
                                     new BoundSingleParameter(i, param),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
                         } else if (param.equals(byte[].class)) {
                             if (binaryMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            binaryMessage = new BoundMethod(method, byte[].class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
-                                    new BoundSingleParameter(method, boolean.class, true),
+                            binaryMessage = new BoundMethod(retriever, method, byte[].class, false, maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
+                                    new BoundSingleParameter(retriever, method, boolean.class, true),
                                     new BoundSingleParameter(i, byte[].class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
                         } else if (param.equals(ByteBuffer.class)) {
                             if (binaryMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            binaryMessage = new BoundMethod(method, ByteBuffer.class, false,
-                                    maxMessageSize, new BoundSingleParameter(method, Session.class, true),
-                                    new BoundSingleParameter(method, boolean.class, true),
+                            binaryMessage = new BoundMethod(retriever, method, ByteBuffer.class, false,
+                                    maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
+                                    new BoundSingleParameter(retriever, method, boolean.class, true),
                                     new BoundSingleParameter(i, ByteBuffer.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
 
@@ -193,32 +198,32 @@ public class AnnotatedEndpointFactory {
                             if (binaryMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            binaryMessage = new BoundMethod(method, InputStream.class, false,
-                                    maxMessageSize, new BoundSingleParameter(method, Session.class, true),
+                            binaryMessage = new BoundMethod(retriever, method, InputStream.class, false,
+                                    maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
                                     new BoundSingleParameter(i, InputStream.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
 
-                        } else if (param.equals(String.class) && getPathParam(method, i) == null) {
+                        } else if (param.equals(String.class) && getPathParam(retriever,method, i) == null) {
                             if (textMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            textMessage = new BoundMethod(method, String.class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
-                                    new BoundSingleParameter(method, boolean.class, true),
+                            textMessage = new BoundMethod(retriever,method, String.class, false, maxMessageSize, new BoundSingleParameter(retriever,method, Session.class, true),
+                                    new BoundSingleParameter(retriever,method, boolean.class, true),
                                     new BoundSingleParameter(i, String.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever,method, paths, endpointClass));
                             messageHandled = true;
                             break;
 
-                        } else if (param.equals(Reader.class) && getPathParam(method, i) == null) {
+                        } else if (param.equals(Reader.class) && getPathParam(retriever,method, i) == null) {
                             if (textMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            textMessage = new BoundMethod(method, Reader.class, false,
-                                    maxMessageSize, new BoundSingleParameter(method, Session.class, true),
+                            textMessage = new BoundMethod(retriever, method, Reader.class, false,
+                                    maxMessageSize, new BoundSingleParameter(retriever,method, Session.class, true),
                                     new BoundSingleParameter(i, Reader.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
 
@@ -226,9 +231,9 @@ public class AnnotatedEndpointFactory {
                             if (pongMessage != null) {
                                 throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                             }
-                            pongMessage = new BoundMethod(method, PongMessage.class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
+                            pongMessage = new BoundMethod(retriever, method, PongMessage.class, false, maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
                                     new BoundSingleParameter(i, PongMessage.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(retriever, method, paths, endpointClass));
                             messageHandled = true;
                             break;
                         }
@@ -239,10 +244,10 @@ public class AnnotatedEndpointFactory {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnMessage.class);
                         }
                         Class<?> boolClass = parameterTypes[booleanLocation];
-                        textMessage = new BoundMethod(method, boolClass, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
-                                new BoundSingleParameter(method, boolean.class, true),
+                        textMessage = new BoundMethod(retriever, method, boolClass, true, maxMessageSize, new BoundSingleParameter(retriever, method, Session.class, true),
+                                new BoundSingleParameter(retriever, method, boolean.class, true),
                                 new BoundSingleParameter(booleanLocation, boolClass),
-                                createBoundPathParameters(method, paths, endpointClass));
+                                createBoundPathParameters(retriever, method, paths, endpointClass));
                         messageHandled = true;
                     }
                     if (!messageHandled) {
@@ -255,15 +260,15 @@ public class AnnotatedEndpointFactory {
         return new AnnotatedEndpointFactory(endpointClass, onOpen, onClose, onError, textMessage, binaryMessage, pongMessage);
     }
 
-    private static BoundPathParameters createBoundPathParameters(final Method method, Set<String> paths, Class<?> endpointClass) throws DeploymentException {
-        return new BoundPathParameters(pathParams(method), method, endpointClass, paths);
+    private static BoundPathParameters createBoundPathParameters(AnnotationRetriever retriever, final Method method, Set<String> paths, Class<?> endpointClass) throws DeploymentException {
+        return new BoundPathParameters(retriever, pathParams(retriever, method), method, endpointClass, paths);
     }
 
 
-    private static String[] pathParams(final Method method) {
+    private static String[] pathParams(AnnotationRetriever retriever, final Method method) {
         String[] params = new String[method.getParameterCount()];
         for (int i = 0; i < method.getParameterCount(); ++i) {
-            PathParam param = getPathParam(method, i);
+            PathParam param = getPathParam(retriever, method, i);
             if (param != null) {
                 params[i] = param.value();
             }
@@ -271,8 +276,8 @@ public class AnnotatedEndpointFactory {
         return params;
     }
 
-    private static PathParam getPathParam(final Method method, final int parameter) {
-        for (final Annotation annotation : method.getParameterAnnotations()[parameter]) {
+    private static PathParam getPathParam(AnnotationRetriever retriever, final Method method, final int parameter) {
+        for (final Annotation annotation : retriever.getParameterAnnotations(method.getDeclaringClass(), method)[parameter]) {
             if (annotation.annotationType().equals(PathParam.class)) {
                 return (PathParam) annotation;
             }
@@ -304,18 +309,20 @@ public class AnnotatedEndpointFactory {
 
         private final int position;
         private final Class<?> type;
-
+        private final AnnotationRetriever retriever;
         BoundSingleParameter(int position, final Class<?> type) {
             this.position = position;
             this.type = type;
+            retriever = DefaultAnnotationRetriever.INSTANCE;
         }
 
-        BoundSingleParameter(final Method method, final Class<?> type, final boolean optional) {
+        BoundSingleParameter(AnnotationRetriever retriever, final Method method, final Class<?> type, final boolean optional) {
+            this.retriever = retriever;
             this.type = type;
             int pos = -1;
             for (int i = 0; i < method.getParameterCount(); ++i) {
                 boolean pathParam = false;
-                for (Annotation annotation : method.getParameterAnnotations()[i]) {
+                for (Annotation annotation : retriever.getParameterAnnotations(method.getDeclaringClass(), method)[i]) {
                     if (annotation.annotationType().equals(PathParam.class)) {
                         pathParam = true;
                         break;
@@ -372,7 +379,7 @@ public class AnnotatedEndpointFactory {
         private final Encoding[] encoders;
         private final Class[] types;
 
-        BoundPathParameters(final String[] positions, final Method method, Class<?> endpointClass, Set<String> paths) throws DeploymentException {
+        BoundPathParameters(AnnotationRetriever retriever, final String[] positions, final Method method, Class<?> endpointClass, Set<String> paths) throws DeploymentException {
             this.positions = positions;
             this.endpointClass = endpointClass;
             this.paths = paths;
@@ -380,7 +387,7 @@ public class AnnotatedEndpointFactory {
             this.types = new Class[positions.length];
             for (int i = 0; i < positions.length; ++i) {
                 Class type = method.getParameterTypes()[i];
-                Annotation[] annotations = method.getParameterAnnotations()[i];
+                Annotation[] annotations = retriever.getParameterAnnotations(endpointClass, method)[i];
                 for(int j = 0; j < annotations.length; ++j) {
                     if(annotations[j] instanceof PathParam) {
                         PathParam param = (PathParam) annotations[j];

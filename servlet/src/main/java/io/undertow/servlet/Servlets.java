@@ -26,6 +26,7 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ErrorPage;
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.api.InstanceHandle;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.LoginConfig;
 import io.undertow.servlet.api.SecurityConstraint;
@@ -166,6 +167,19 @@ public class Servlets {
 
     public static ListenerInfo listener(final Class<? extends EventListener> listenerClass) {
         return new ListenerInfo(listenerClass);
+    }
+
+    public static ListenerInfo listener(final EventListener listener) {
+        return new ListenerInfo(listener.getClass(), () -> new InstanceHandle<>() {
+            @Override
+            public EventListener getInstance() {
+                return listener;
+            }
+
+            @Override
+            public void release() {
+            }
+        });
     }
 
     public static SecurityConstraint securityConstraint() {

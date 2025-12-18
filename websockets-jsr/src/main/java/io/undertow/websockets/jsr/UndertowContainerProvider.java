@@ -20,8 +20,10 @@ package io.undertow.websockets.jsr;
 
 import io.undertow.connector.ByteBufferPool;
 import io.undertow.server.DefaultByteBufferPool;
+import io.undertow.servlet.api.AnnotationRetriever;
 import io.undertow.servlet.api.ClassIntrospecter;
 import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.util.DefaultAnnotationRetriever;
 import io.undertow.servlet.util.DefaultClassIntrospector;
 import jakarta.websocket.ContainerProvider;
 import jakarta.websocket.WebSocketContainer;
@@ -72,8 +74,10 @@ public class UndertowContainerProvider extends ContainerProvider {
         }
         return webSocketContainer;
     }
-
     static ServerWebSocketContainer getDefaultContainer() {
+        return getDefaultContainer(DefaultAnnotationRetriever.INSTANCE);
+    }
+    static ServerWebSocketContainer getDefaultContainer(AnnotationRetriever retriever) {
         if (defaultContainerDisabled) {
             return null;
         }
@@ -86,7 +90,7 @@ public class UndertowContainerProvider extends ContainerProvider {
                 //but there is not much we can do
                 //todo: what options should we use here?
                 ByteBufferPool buffers = new DefaultByteBufferPool(directBuffers, 1024, 100, 12);
-                defaultContainer = new ServerWebSocketContainer(defaultIntrospector, UndertowContainerProvider.class.getClassLoader(), new Supplier<XnioWorker>() {
+                defaultContainer = new ServerWebSocketContainer(retriever, defaultIntrospector, UndertowContainerProvider.class.getClassLoader(), new Supplier<XnioWorker>() {
                     volatile XnioWorker worker;
 
                     @Override

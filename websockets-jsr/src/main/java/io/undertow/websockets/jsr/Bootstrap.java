@@ -54,14 +54,14 @@ public class Bootstrap implements ServletExtension {
     @Override
     public void handleDeployment(DeploymentInfo deploymentInfo, ServletContext servletContext) {
         WebSocketDeploymentInfo info = (WebSocketDeploymentInfo) deploymentInfo.getServletContextAttributes().get(WebSocketDeploymentInfo.ATTRIBUTE_NAME);
-
+        System.out.println("WS DEPLOYMENT INFO, retriever is " + deploymentInfo.getAnnotationRetriever());
         if (info == null) {
             return;
         }
         Supplier<XnioWorker> worker = info.getWorker();
         ByteBufferPool buffers = info.getBuffers();
         if(buffers == null) {
-            ServerWebSocketContainer defaultContainer = UndertowContainerProvider.getDefaultContainer();
+            ServerWebSocketContainer defaultContainer = UndertowContainerProvider.getDefaultContainer(deploymentInfo.getAnnotationRetriever());
             if(defaultContainer == null) {
                 throw JsrWebSocketLogger.ROOT_LOGGER.bufferPoolWasNullAndNoDefault();
             }
@@ -81,7 +81,7 @@ public class Bootstrap implements ServletExtension {
         for(ExtensionHandshake e: info.getExtensions()) {
             extensions.add(new ExtensionImpl(e.getName(), Collections.emptyList()));
         }
-        ServerWebSocketContainer container = new ServerWebSocketContainer(deploymentInfo.getClassIntrospecter(), servletContext.getClassLoader(), worker, buffers, setup, info.isDispatchToWorkerThread(), bind, info.getReconnectHandler(), extensions);
+        ServerWebSocketContainer container = new ServerWebSocketContainer(deploymentInfo.getAnnotationRetriever(), deploymentInfo.getClassIntrospecter(), servletContext.getClassLoader(), worker, buffers, setup, info.isDispatchToWorkerThread(), bind, info.getReconnectHandler(), extensions);
         try {
             for (Class<?> annotation : info.getAnnotatedEndpoints()) {
                 container.addEndpoint(annotation);
@@ -95,8 +95,8 @@ public class Bootstrap implements ServletExtension {
         servletContext.setAttribute(ServerContainer.class.getName(), container);
         info.containerReady(container);
         SecurityActions.addContainer(deploymentInfo.getClassLoader(), container);
+        deploymentInfo.addListener(Servlets.listener(new WebSocketListener()));
 
-        deploymentInfo.addListener(Servlets.listener(WebSocketListener.class));
         deploymentInfo.addDeploymentCompleteListener(new ServletContextListener() {
             @Override
             public void contextInitialized(ServletContextEvent sce) {

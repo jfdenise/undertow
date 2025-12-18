@@ -32,7 +32,7 @@ public class ServiceLoaderInitializer {
         try {
             final Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
             PARSER = cls.getConstructor(OptionMap.class);
-            System.out.println("FOUND CONSTRUCTOR for HttpRequestParser$$generated");
+            System.out.println("UNDERTOW CORE, FOUND CONSTRUCTOR for HttpRequestParser$$generated");
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

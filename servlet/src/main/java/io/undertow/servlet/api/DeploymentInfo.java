@@ -53,6 +53,7 @@ import io.undertow.servlet.ServletExtension;
 import io.undertow.servlet.UndertowServletMessages;
 import io.undertow.servlet.core.DefaultAuthorizationManager;
 import io.undertow.servlet.core.InMemorySessionManagerFactory;
+import io.undertow.servlet.util.DefaultAnnotationRetriever;
 import io.undertow.servlet.util.DefaultClassIntrospector;
 import io.undertow.util.ImmediateAuthenticationMechanismFactory;
 
@@ -71,6 +72,7 @@ public class DeploymentInfo implements Cloneable {
     private ClassLoader classLoader;
     private ResourceManager resourceManager = ResourceManager.EMPTY_RESOURCE_MANAGER;
     private ClassIntrospecter classIntrospecter = DefaultClassIntrospector.INSTANCE;
+    private AnnotationRetriever annotationRetriever = DefaultAnnotationRetriever.INSTANCE;
     private int majorVersion = DEFAULT_MAJOR_VERSION;
     private int minorVersion = 0;
     private int containerMajorVersion = DEFAULT_MAJOR_VERSION;
@@ -295,6 +297,15 @@ public class DeploymentInfo implements Cloneable {
 
     public DeploymentInfo setClassIntrospecter(final ClassIntrospecter classIntrospecter) {
         this.classIntrospecter = classIntrospecter;
+        return this;
+    }
+
+    public AnnotationRetriever getAnnotationRetriever() {
+        return annotationRetriever;
+    }
+
+    public DeploymentInfo setAnnotationRetriever(final AnnotationRetriever annotationRetriever) {
+        this.annotationRetriever = annotationRetriever;
         return this;
     }
 
@@ -1424,7 +1435,8 @@ public class DeploymentInfo implements Cloneable {
                 .setMajorVersion(majorVersion)
                 .setMinorVersion(minorVersion)
                 .setDeploymentName(deploymentName)
-                .setClassIntrospecter(classIntrospecter);
+                .setClassIntrospecter(classIntrospecter)
+                .setAnnotationRetriever(annotationRetriever);
 
         for (Map.Entry<String, ServletInfo> e : servlets.entrySet()) {
             info.addServlet(e.getValue().clone());
