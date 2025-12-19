@@ -18,6 +18,7 @@
 
 package io.undertow.websockets.jsr;
 
+import io.undertow.servlet.api.AnnotationRetriever;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -143,11 +144,11 @@ public class EncodingFactory {
         }
     }
 
-    public static EncodingFactory createFactory(final ClassIntrospecter classIntrospecter, final Class<? extends Decoder>[] decoders, final Class<? extends Encoder>[] encoders) throws DeploymentException {
-        return createFactory(classIntrospecter, Arrays.asList(decoders), Arrays.asList(encoders));
+    public static EncodingFactory createFactory(AnnotationRetriever retriever, final ClassIntrospecter classIntrospecter, final Class<? extends Decoder>[] decoders, final Class<? extends Encoder>[] encoders) throws DeploymentException {
+        return createFactory(retriever, classIntrospecter, Arrays.asList(decoders), Arrays.asList(encoders));
     }
 
-    public static EncodingFactory createFactory(final ClassIntrospecter classIntrospecter, final List<Class<? extends Decoder>> decoders, final List<Class<? extends Encoder>> encoders) throws DeploymentException {
+    public static EncodingFactory createFactory(AnnotationRetriever retriever, final ClassIntrospecter classIntrospecter, final List<Class<? extends Decoder>> decoders, final List<Class<? extends Encoder>> encoders) throws DeploymentException {
         final Map<Class<?>, List<InstanceFactory<? extends Encoder>>> binaryEncoders = new HashMap<>();
         final Map<Class<?>, List<InstanceFactory<? extends Decoder>>> binaryDecoders = new HashMap<>();
         final Map<Class<?>, List<InstanceFactory<? extends Encoder>>> textEncoders = new HashMap<>();
@@ -156,7 +157,7 @@ public class EncodingFactory {
         for (Class<? extends Decoder> decoder : decoders) {
             if (Decoder.Binary.class.isAssignableFrom(decoder)) {
                 try {
-                    Method method = decoder.getMethod("decode", ByteBuffer.class);
+                    Method method = retriever.getMethod(decoder, "decode", ByteBuffer.class);
                     final Class<?> type = resolveReturnType(method, decoder);
                     List<InstanceFactory<? extends Decoder>> list = binaryDecoders.get(type);
                     if (list == null) {
@@ -168,7 +169,7 @@ public class EncodingFactory {
                 }
             } else if (Decoder.BinaryStream.class.isAssignableFrom(decoder)) {
                 try {
-                    Method method = decoder.getMethod("decode", InputStream.class);
+                    Method method = retriever.getMethod(decoder, "decode", InputStream.class);
                     final Class<?> type = resolveReturnType(method, decoder);
                     List<InstanceFactory<? extends Decoder>> list = binaryDecoders.get(type);
                     if (list == null) {
@@ -180,7 +181,7 @@ public class EncodingFactory {
                 }
             } else if (Decoder.Text.class.isAssignableFrom(decoder)) {
                 try {
-                    Method method = decoder.getMethod("decode", String.class);
+                    Method method = retriever.getMethod(decoder, "decode", String.class);
                     final Class<?> type = resolveReturnType(method, decoder);
                     List<InstanceFactory<? extends Decoder>> list = textDecoders.get(type);
                     if (list == null) {
@@ -192,7 +193,7 @@ public class EncodingFactory {
                 }
             } else if (Decoder.TextStream.class.isAssignableFrom(decoder)) {
                 try {
-                    Method method = decoder.getMethod("decode", Reader.class);
+                    Method method = retriever.getMethod(decoder, "decode", Reader.class);
                     final Class<?> type = resolveReturnType(method, decoder);
                     List<InstanceFactory<? extends Decoder>> list = textDecoders.get(type);
                     if (list == null) {
@@ -209,28 +210,28 @@ public class EncodingFactory {
 
         for (Class<? extends Encoder> encoder : encoders) {
             if (Encoder.Binary.class.isAssignableFrom(encoder)) {
-                final Class<?> type = findEncodeMethod(encoder, ByteBuffer.class);
+                final Class<?> type = findEncodeMethod(retriever, encoder, ByteBuffer.class);
                 List<InstanceFactory<? extends Encoder>> list = binaryEncoders.get(type);
                 if (list == null) {
                     binaryEncoders.put(type, list = new ArrayList<>());
                 }
                 list.add(createInstanceFactory(classIntrospecter, encoder));
             } else if (Encoder.BinaryStream.class.isAssignableFrom(encoder)) {
-                final Class<?> type = findEncodeMethod(encoder, void.class, OutputStream.class);
+                final Class<?> type = findEncodeMethod(retriever, encoder, void.class, OutputStream.class);
                 List<InstanceFactory<? extends Encoder>> list = binaryEncoders.get(type);
                 if (list == null) {
                     binaryEncoders.put(type, list = new ArrayList<>());
                 }
                 list.add(createInstanceFactory(classIntrospecter, encoder));
             } else if (Encoder.Text.class.isAssignableFrom(encoder)) {
-                final Class<?> type = findEncodeMethod(encoder, String.class);
+                final Class<?> type = findEncodeMethod(retriever, encoder, String.class);
                 List<InstanceFactory<? extends Encoder>> list = textEncoders.get(type);
                 if (list == null) {
                     textEncoders.put(type, list = new ArrayList<>());
                 }
                 list.add(createInstanceFactory(classIntrospecter, encoder));
             } else if (Encoder.TextStream.class.isAssignableFrom(encoder)) {
-                final Class<?> type = findEncodeMethod(encoder, void.class, Writer.class);
+                final Class<?> type = findEncodeMethod(retriever, encoder, void.class, Writer.class);
                 List<InstanceFactory<? extends Encoder>> list = textEncoders.get(type);
                 if (list == null) {
                     textEncoders.put(type, list = new ArrayList<>());
@@ -292,8 +293,8 @@ public class EncodingFactory {
         }
     }
 
-    private static Class<?> findEncodeMethod(final Class<? extends Encoder> encoder, final Class<?> returnType, Class<?>... otherParameters) throws DeploymentException {
-        for (Method method : encoder.getMethods()) {
+    private static Class<?> findEncodeMethod(AnnotationRetriever retriever, final Class<? extends Encoder> encoder, final Class<?> returnType, Class<?>... otherParameters) throws DeploymentException {
+        for (Method method : retriever.getDeclaredMethods(encoder)) {
             if (method.getName().equals("encode") && !method.isBridge() &&
                     method.getParameterCount() == 1 + otherParameters.length &&
                     method.getReturnType() == returnType) {

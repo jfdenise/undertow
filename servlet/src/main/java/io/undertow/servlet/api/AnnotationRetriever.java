@@ -35,5 +35,5 @@ public interface AnnotationRetriever {
     Annotation getAnnotation(Class<?> clazz, Method m, Class<? extends Annotation> annotType) throws RuntimeException;
     Annotation getDeclaredAnnotation(Class<?> clazz, Class<? extends Annotation> annotType) throws RuntimeException;
     Annotation getDeclaredAnnotation(Class<?> clazz, Method m, Class<? extends Annotation> annotType) throws RuntimeException;
-
+    Method getMethod(Class<?> clazz, String name, Class<?>... params) throws NoSuchMethodException;
 }

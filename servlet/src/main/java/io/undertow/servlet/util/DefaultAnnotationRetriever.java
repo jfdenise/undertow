@@ -65,4 +65,8 @@ public class DefaultAnnotationRetriever implements AnnotationRetriever {
         return clazz.getDeclaredMethods();
     }
 
+    @Override
+    public Method getMethod(Class<?> clazz, String name, Class<?>... params) throws NoSuchMethodException {
+        return clazz.getMethod(name, params);
+    }
 }
