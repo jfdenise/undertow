@@ -60,7 +60,7 @@ public class ListenerRegistry {
         private final String protocol;
         private final String name;
         private final String serverName;
-        private final InetSocketAddress bindAddress;
+        private InetSocketAddress bindAddress;
 
         /**
          * Map that can be used to store additional listener metadata
@@ -78,7 +78,9 @@ public class ListenerRegistry {
             this.serverName = serverName;
             this.bindAddress = bindAddress;
         }
-
+        public void setBindAddress(InetSocketAddress bindAddress) {
+            this.bindAddress = bindAddress;
+        }
         /**
          * The protocol that this listener is using
          */

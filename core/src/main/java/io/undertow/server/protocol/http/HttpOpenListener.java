@@ -58,7 +58,7 @@ public final class HttpOpenListener implements ChannelListener<StreamConnection>
 
     private final Set<HttpServerConnection> connections = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final ByteBufferPool bufferPool;
+    private ByteBufferPool bufferPool;
     private final int bufferSize;
 
     private volatile HttpHandler rootHandler;
@@ -83,7 +83,10 @@ public final class HttpOpenListener implements ChannelListener<StreamConnection>
     public HttpOpenListener(final ByteBufferPool pool) {
         this(pool, OptionMap.EMPTY);
     }
-
+    public void stop() {
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!CLODING OPENLISTENER");
+        bufferPool = null;
+    }
     public HttpOpenListener(final ByteBufferPool pool, final OptionMap undertowOptions) {
         this.undertowOptions = undertowOptions;
         this.bufferPool = pool;
