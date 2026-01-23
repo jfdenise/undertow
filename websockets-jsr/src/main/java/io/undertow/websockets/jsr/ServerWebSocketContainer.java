@@ -44,7 +44,6 @@ import io.undertow.websockets.jsr.handshake.JsrHybi13Handshake;
 import org.xnio.IoFuture;
 import org.xnio.IoUtils;
 import io.undertow.connector.ByteBufferPool;
-import io.undertow.servlet.api.AnnotationRetriever;
 import io.undertow.servlet.util.ConstructorInstanceFactory;
 
 import org.xnio.OptionMap;
@@ -91,6 +90,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static java.lang.System.*;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 
 /**
@@ -138,22 +138,20 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     private final ThreadSetupHandler.Action<Void, Runnable> invokeEndpointTask;
 
     private volatile boolean closed = false;
-    private final AnnotationRetriever annotationRetriever;
 
-    public ServerWebSocketContainer(AnnotationRetriever annotationRetriever, final ClassIntrospecter classIntrospecter, final Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, boolean clientMode) {
-        this(annotationRetriever, classIntrospecter, ServerWebSocketContainer.class.getClassLoader(), xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, null, null);
+    public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, boolean clientMode) {
+        this(classIntrospecter, ServerWebSocketContainer.class.getClassLoader(), xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, null, null);
     }
 
-    public ServerWebSocketContainer(AnnotationRetriever annotationRetriever, final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker) {
-        this(annotationRetriever, classIntrospecter, classLoader, xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, null, null);
+    public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker) {
+        this(classIntrospecter, classLoader, xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, null, null);
     }
 
-    public ServerWebSocketContainer(AnnotationRetriever annotationRetriever, final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler) {
-        this(annotationRetriever, classIntrospecter, classLoader, xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, Collections.emptyList());
+    public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler) {
+        this(classIntrospecter, classLoader, xnioWorker, bufferPool, threadSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, Collections.emptyList());
     }
 
-    public ServerWebSocketContainer(AnnotationRetriever annotationRetriever, final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, List<Extension> installedExtensions) {
-        this.annotationRetriever = annotationRetriever;
+    public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<XnioWorker> xnioWorker, ByteBufferPool bufferPool, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, List<Extension> installedExtensions) {
         this.classIntrospecter = classIntrospecter;
         this.bufferPool = bufferPool;
         this.xnioWorker = xnioWorker;
@@ -370,7 +368,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             }
         }
 
-        EncodingFactory encodingFactory = EncodingFactory.createFactory(annotationRetriever, classIntrospecter, cec.getDecoders(), cec.getEncoders());
+        EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, cec.getDecoders(), cec.getEncoders());
         UndertowSession undertowSession = new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateInstanceHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder);
         instance.onOpen(undertowSession, cec);
         channel.resumeReceives();
@@ -407,7 +405,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             throws ServletException, IOException {
         ServerEndpointConfig.Configurator configurator = sec.getConfigurator();
         try {
-            EncodingFactory encodingFactory = EncodingFactory.createFactory(annotationRetriever, classIntrospecter, sec.getDecoders(), sec.getEncoders());
+            EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, sec.getDecoders(), sec.getEncoders());
             PathTemplate pt = PathTemplate.create(sec.getPath());
 
             InstanceFactory<?> instanceFactory = null;
@@ -441,7 +439,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
             AnnotatedEndpointFactory annotatedEndpointFactory = null;
             if(!Endpoint.class.isAssignableFrom(sec.getEndpointClass())) {
-                annotatedEndpointFactory = AnnotatedEndpointFactory.create(annotationRetriever, sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
+                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
             }
 
 
@@ -644,8 +642,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     }
 
     private synchronized void addEndpointInternal(final Class<?> endpoint, boolean requiresCreation) throws DeploymentException {
-        ServerEndpoint serverEndpoint = (ServerEndpoint)annotationRetriever.getAnnotation(endpoint, ServerEndpoint.class);
-        ClientEndpoint clientEndpoint = (ClientEndpoint)annotationRetriever.getAnnotation(endpoint, ClientEndpoint.class);
+        ServerEndpoint serverEndpoint = (ServerEndpoint)WildFlyGraalSetup.getAnnotation(endpoint, ServerEndpoint.class);
+        ClientEndpoint clientEndpoint = (ClientEndpoint)WildFlyGraalSetup.getAnnotation(endpoint, ClientEndpoint.class);
         if (serverEndpoint != null) {
             JsrWebSocketLogger.ROOT_LOGGER.addingAnnotatedServerEndpoint(endpoint, serverEndpoint.value());
             final PathTemplate template = PathTemplate.create(serverEndpoint.value());
@@ -662,8 +660,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             seenPaths.add(template);
             Class<? extends ServerEndpointConfig.Configurator> configuratorClass = serverEndpoint.configurator();
 
-            EncodingFactory encodingFactory = EncodingFactory.createFactory(annotationRetriever, classIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
-            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(annotationRetriever, endpoint, encodingFactory, template.getParameterNames());
+            EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
+            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames());
             InstanceFactory<?> instanceFactory = null;
             try {
                 instanceFactory = classIntrospecter.createInstanceFactory(endpoint);
@@ -705,7 +703,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             handleAddingFilterMapping();
         } else if (clientEndpoint != null) {
             JsrWebSocketLogger.ROOT_LOGGER.addingAnnotatedClientEndpoint(endpoint);
-            EncodingFactory encodingFactory = EncodingFactory.createFactory(annotationRetriever, classIntrospecter, clientEndpoint.decoders(), clientEndpoint.encoders());
+            EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, clientEndpoint.decoders(), clientEndpoint.encoders());
             InstanceFactory<?> instanceFactory;
             try {
                 instanceFactory = classIntrospecter.createInstanceFactory(endpoint);
@@ -725,7 +723,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     }
                 }
             }
-            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(annotationRetriever, endpoint, encodingFactory, Collections.<String>emptySet());
+            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.<String>emptySet());
 
             ClientEndpointConfig.Configurator configurator = null;
             try {
@@ -774,12 +772,12 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             throw JsrWebSocketMessages.MESSAGES.multipleEndpointsWithOverlappingPaths(template, existing);
         }
         seenPaths.add(template);
-        EncodingFactory encodingFactory = EncodingFactory.createFactory(annotationRetriever, classIntrospecter, endpoint.getDecoders(), endpoint.getEncoders());
+        EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, endpoint.getDecoders(), endpoint.getEncoders());
 
         AnnotatedEndpointFactory annotatedEndpointFactory = null;
         if(!Endpoint.class.isAssignableFrom(endpoint.getEndpointClass())) {
             // We may want to check that the path in @ServerEndpoint matches the specified path, and throw if they are not equivalent
-            annotatedEndpointFactory = AnnotatedEndpointFactory.create(annotationRetriever, endpoint.getEndpointClass(), encodingFactory, template.getParameterNames());
+            annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint.getEndpointClass(), encodingFactory, template.getParameterNames());
         }
         ConfiguredServerEndpoint confguredServerEndpoint = new ConfiguredServerEndpoint(endpoint, null, template, encodingFactory, annotatedEndpointFactory, endpoint.getExtensions());
         configuredServerEndpoints.add(confguredServerEndpoint);

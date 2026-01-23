@@ -56,7 +56,6 @@ import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ServletContainer;
 import io.undertow.servlet.test.util.TestClassIntrospector;
-import io.undertow.servlet.util.DefaultAnnotationRetriever;
 import io.undertow.testutils.AjpIgnore;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpOneOnly;
@@ -110,7 +109,7 @@ public class JsrWebSocketServer07Test {
             }
         }
 
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -142,7 +141,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
         deployServlet(builder);
@@ -175,7 +174,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
 
@@ -221,7 +220,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -267,7 +266,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
@@ -310,7 +309,7 @@ public class JsrWebSocketServer07Test {
             }
 
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -347,7 +346,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
 
@@ -393,7 +392,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
@@ -437,7 +436,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -464,7 +463,7 @@ public class JsrWebSocketServer07Test {
                 connected.set(true);
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -506,7 +505,7 @@ public class JsrWebSocketServer07Test {
                 clientLatch.countDown();
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -552,7 +551,7 @@ public class JsrWebSocketServer07Test {
                 clientLatch.countDown();
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -591,7 +590,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -630,7 +629,7 @@ public class JsrWebSocketServer07Test {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -647,7 +646,7 @@ public class JsrWebSocketServer07Test {
 
     // FIXME UNDERTOW-1862 @Test
     public void testErrorHandling() throws Exception {
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(DefaultAnnotationRetriever.INSTANCE, TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
+        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getWorkerSupplier(), DefaultServer.getBufferPool(), Collections.emptyList(), false, false);
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(ProgramaticErrorEndpoint.class, "/").configurator(new InstanceConfigurator(new ProgramaticErrorEndpoint())).build());
         deployServlet(builder);

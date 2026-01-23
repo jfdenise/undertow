@@ -18,7 +18,6 @@
 
 package io.undertow.websockets.jsr.annotated;
 
-import io.undertow.servlet.api.AnnotationRetriever;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,6 +30,7 @@ import java.util.Set;
 import jakarta.websocket.DeploymentException;
 
 import io.undertow.websockets.jsr.JsrWebSocketMessages;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * A method with bound parameters
@@ -44,7 +44,7 @@ final class BoundMethod {
     private final boolean decoderRequired;
     private final long maxMessageSize;
 
-    BoundMethod(AnnotationRetriever retriever, final Method method, final Class<?> messageType, final boolean decoderRequired, long maxMessageSize, BoundParameter... params) throws DeploymentException {
+    BoundMethod(final Method method, final Class<?> messageType, final boolean decoderRequired, long maxMessageSize, BoundParameter... params) throws DeploymentException {
         this.method = method;
         this.messageType = messageType;
         this.decoderRequired = decoderRequired;
@@ -62,8 +62,8 @@ final class BoundMethod {
             //first check to see if the user has accidentally used the wrong PathParam annotation
             //and if so throw a more informative error message
             boolean wrongAnnotation = false;
-            for (int i = 0; i < retriever.getParameterAnnotations(method.getDeclaringClass(), method).length; ++i) {
-                for (int j = 0; j < retriever.getParameterAnnotations(method.getDeclaringClass(), method)[i].length; ++j) {
+            for (int i = 0; i < WildFlyGraalSetup.getParameterAnnotations(method.getDeclaringClass(), method).length; ++i) {
+                for (int j = 0; j < WildFlyGraalSetup.getParameterAnnotations(method.getDeclaringClass(), method)[i].length; ++j) {
                     Annotation annotation = method.getParameterAnnotations()[i][j];
                     if (annotation.annotationType().getName().equals("jakarta.ws.rs.PathParam")) {
                         wrongAnnotation = true;

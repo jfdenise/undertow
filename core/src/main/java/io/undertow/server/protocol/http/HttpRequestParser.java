@@ -92,6 +92,7 @@ import static io.undertow.util.Protocols.HTTP_0_9_STRING;
 import static io.undertow.util.Protocols.HTTP_1_0_STRING;
 import static io.undertow.util.Protocols.HTTP_1_1_STRING;
 import static io.undertow.util.Protocols.HTTP_2_0_STRING;
+import org.wildfly.graal.runtime.WildFlyGraalSetup;
 
 /**
  * The basic HTTP parser. The actual parser is a sub class of this class that is generated as part of
@@ -222,12 +223,15 @@ public abstract class HttpRequestParser {
 
     public static final HttpRequestParser instance(final OptionMap options) {
         try {
+            String className = HttpRequestParser.class.getName() + "$$generated";
+            ClassLoader loader = HttpRequestParser.class.getClassLoader();
+            Class<?> cls = WildFlyGraalSetup.getClassFromCache(loader, className);
             Constructor<?> ctor;
-            if(Boolean.getBoolean("org.wildfly.graal")) {
-                ctor = ServiceLoaderInitializer.getParserConstructor();
-            } else {
-                final Class<?> cls = Class.forName(HttpRequestParser.class.getName() + "$$generated", false, HttpRequestParser.class.getClassLoader());
+            if(cls == null) {
+                cls = Class.forName(className, false, loader);
                 ctor = cls.getConstructor(OptionMap.class);
+            } else {
+                ctor = WildFlyGraalSetup.getConstructorFromCache(loader, cls, OptionMap.class);
             }
             return (HttpRequestParser) ctor.newInstance(options);
         } catch (Exception e) {
