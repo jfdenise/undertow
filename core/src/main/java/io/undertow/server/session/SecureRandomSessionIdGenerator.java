@@ -32,8 +32,6 @@ import java.security.SecureRandom;
  */
 public class SecureRandomSessionIdGenerator implements SessionIdGenerator {
 
-    private final SecureRandom random = new SecureRandom();
-
     private volatile int length = 30;
 
     private static final char[] SESSION_ID_ALPHABET;
@@ -51,7 +49,7 @@ public class SecureRandomSessionIdGenerator implements SessionIdGenerator {
     @Override
     public String createSessionId() {
         final byte[] bytes = new byte[length];
-        random.nextBytes(bytes);
+        new SecureRandom().nextBytes(bytes);
         return new String(encode(bytes));
     }
 
