@@ -69,7 +69,15 @@ public class WebSocketDeploymentInfo implements Cloneable {
         this.worker = worker;
         return this;
     }
-
+    public WebSocketDeploymentInfo setWorkerSupplier(Supplier<XnioWorker> worker) {
+        this.worker = new Supplier<XnioWorker>() {
+            @Override
+            public XnioWorker get() {
+                return worker.get();
+            }
+        };
+        return this;
+    }
     public WebSocketDeploymentInfo setWorker(XnioWorker worker) {
         this.worker = new Supplier<XnioWorker>() {
             @Override
